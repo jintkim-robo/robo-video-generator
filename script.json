@@ -1,0 +1,10 @@
+[
+ {"scene":"hook","lines":[{"sub":"毎日、同じ作業に"},{"sub":"追われていませんか？"}]},
+ {"scene":"logo","lines":[{"sub":"Robo Co-opは","tts":"ロボコープは"},{"sub":"人とAIが一緒に働く"},{"sub":"仕組みをつくっています"}]},
+ {"scene":"tasks","lines":[{"sub":"メールや資料、日程調整は"},{"sub":"エージェントにおまかせ"}]},
+ {"scene":"shot","img":"board.png","tag":"FLEET BOARD · NOTION","title":"ラインの状況を1枚に","lines":[{"sub":"各チームの状況は"},{"sub":"ひとつのボードに集約"}]},
+ {"scene":"shot","img":"fg_red.png","tag":"FLEET GLASS · DEMO","title":"ダッシュボードも自作","lines":[{"sub":"見える化の画面も"},{"sub":"自分たちでつくります"}]},
+ {"scene":"shot","img":"pg_red.png","tag":"PAPER GLASS · PAPER / DEMO","title":"実験は、まず紙上で","lines":[{"sub":"新しい試みは"},{"sub":"デモ環境で検証"}]},
+ {"scene":"fleet","lines":[{"sub":"人は、大事な判断に集中"}]},
+ {"scene":"end","lines":[{"sub":"あなたのチームの"},{"sub":"「めんどう」を教えてください"}]}
+]

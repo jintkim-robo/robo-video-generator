@@ -1,0 +1,17 @@
+build/
+out/
+*.mp4
+*.m4a
+*.wav
+*.mp3
+shots/*
+!shots/.gitkeep
+.venv/
+venv/
+__pycache__/
+*.ttf
+*.ttc
+*.otf
+*.svg
+.env
+config.local.json

@@ -1,0 +1,5 @@
+[{"Name":"Sales","Type":"Line","Status":"Green","Line":"Sales","Focus":"Weekly pipeline review automated"},
+{"Name":"Research","Type":"Line","Status":"Yellow","Line":"Research","Focus":"Market notes summarised by agent"},
+{"Name":"Draft approval","Type":"Waiting approval","Status":"Open","Line":"Cross","Focus":"Newsletter draft waiting for human review"},
+{"Name":"Pilot","Type":"Live experiment","Status":"Open","Line":"Cross","Focus":"Meeting notes → tasks pilot"},
+{"Name":"Dev queue","Type":"Dev queue","Status":"Open","Line":"Builder","Focus":"Dashboard polish"}]

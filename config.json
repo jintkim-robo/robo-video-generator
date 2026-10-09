@@ -1,0 +1,12 @@
+{
+  "logo_dir": "../Robo-Design-System/assets/logos/robo-coop",
+  "logo_mark": "robo-coop-mark-inverse.svg",
+  "logo_vertical": "robo-coop-vertical-inverse.svg",
+  "font_jp_bold": "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+  "font_jp_regular": "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+  "font_latin": "/usr/share/fonts/truetype/roboto/Roboto-VariableFont_wdth,wght.ttf",
+  "shots_dir": "shots",
+  "out": "out/video.mp4",
+  "voice": "ja-JP-NanamiNeural",
+  "rate": "+15%"
+}
