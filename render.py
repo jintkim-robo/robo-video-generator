@@ -144,7 +144,8 @@ def sc_shot(L,lt,d,sc,dd):
         fp=P(os.path.join(CFG['shots_dir'],sc['img']))
         if os.path.exists(fp): im=Image.open(fp).convert('RGB')
         else:  # placeholder when screenshot missing
-            im=Image.new('RGB',(1440,1000),(30,41,59)); ImageDraw.Draw(im).text((80,440),'screenshot: '+sc['img'],font=F(60),fill=(148,163,184)); fw=1000; SHOT[sc['img']]=im.resize((fw,int(im.height*fw/im.width)),Image.LANCZOS)
+            im=Image.new('RGB',(1440,1000),(30,41,59)); ImageDraw.Draw(im).text((80,440),'screenshot: '+sc['img'],font=F(60),fill=(148,163,184))
+        fw=1000; SHOT[sc['img']]=im.resize((fw,int(im.height*fw/im.width)),Image.LANCZOS)
     im=SHOT[sc['img']]
     label(d,150,sc['tag'],C['cyan']); ctext(d,220,sc['title'],F(50),C['white'])
     p=ease(lt/0.8); fx0,fy0,fx1,fy1=50,330+int((1-p)*60),W-50,1080+int((1-p)*60)
