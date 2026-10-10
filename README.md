@@ -54,5 +54,8 @@ Fonts: Noto Sans JP（日本語）/ Roboto（英字）— デザインシステ�
 720×1280, H.264 **Main** profile level 3.1, yuv420p, CRF 21, AAC 128k, `+faststart`。
 High プロファイル 1080p はスマホで再生できないことがあったため、この設定にしています。30秒で約5MB。
 
-## ライセンス
-コードは社内利用。フォント・ロゴ・スクショは同梱しません。
+## ライセンス / License
+- コード: MIT（`LICENSE`、© Robo Co-op）/ Code: MIT.
+- **対象外 / Not covered**: Robo-Design-System のロゴ・ブランド資産は MIT の対象外で **All rights reserved**（本リポジトリには同梱していません）。Robo Co-op logos and brand assets are NOT covered by the MIT license and are all rights reserved.
+- edge-tts は Microsoft 非公式のクライアントです。利用は自己責任で、各サービスの規約に従ってください / edge-tts is unofficial; use at your own risk and follow the relevant terms.
+- フォント（Noto Sans JP / Roboto）・スクショは同梱しません。各ライセンスに従って別途入手してください。
