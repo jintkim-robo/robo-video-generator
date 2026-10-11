@@ -15,3 +15,5 @@ __pycache__/
 *.svg
 .env
 config.local.json
+.ruff_cache/
+.pytest_cache/

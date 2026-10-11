@@ -1,0 +1,15 @@
+# CI lint config: catch real bugs (pyflakes, syntax, bugbear) and ignore
+# cosmetic style rules so the compact script style stays as-is.
+target-version = "py311"
+
+[lint]
+select = ["E4", "E7", "E9", "F", "B"]
+ignore = [
+  "F401",  # unused import (cosmetic)
+  "F841",  # unused local (cosmetic)
+  "E401",  # multiple imports on one line (cosmetic)
+  "E402",  # import not at top (script style)
+  "E701", "E702", "E703",  # compact one-line statements (cosmetic)
+  "E731",  # lambda assignment (cosmetic)
+  "E741",  # ambiguous variable name `l` (cosmetic)
+]

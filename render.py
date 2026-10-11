@@ -194,10 +194,10 @@ for n in range(N):
     if i+1<len(S) and t>starts[i+1]-XF:
         k=(t-(starts[i+1]-XF))/XF; nxt=scene_layer(i+1,starts[i+1]+0.0)
         lay=Image.blend(lay,nxt,0)  # keep
-        lay.putalpha(lay.getchannel('A').point(lambda v:int(v*(1-k))))
+        lay.putalpha(lay.getchannel('A').point(lambda v,k=k:int(v*(1-k))))
         bg.alpha_composite(lay); lay=None
     if i>0 and t-starts[i]<XF:
-        k=(t-starts[i])/XF; lay.putalpha(lay.getchannel('A').point(lambda v:int(v*k)))
+        k=(t-starts[i])/XF; lay.putalpha(lay.getchannel('A').point(lambda v,k=k:int(v*k)))
     if lay is not None: bg.alpha_composite(lay)
     draw_sub(bg,t)
     ff.stdin.write(bg.convert('RGB').tobytes())
