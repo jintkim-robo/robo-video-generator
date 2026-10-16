@@ -5,6 +5,7 @@ CFG=json.load(open(os.environ.get('RVG_CONFIG','config.json')))
 base=os.path.dirname(os.path.abspath(os.environ.get('RVG_CONFIG','config.json')))
 P=lambda p:os.path.join(base,os.path.expanduser(p))
 from PIL import Image,ImageDraw,ImageFont,ImageFilter
+from motion_scenes import draw_kinetic, draw_ui, draw_infographic
 W,H,FPS=720,1280,30
 DS=P(CFG['logo_dir'])+'/'
 C=dict(bg=(15,23,42),black=(13,15,18),white=(245,245,240),blue=(30,64,175),cyan=(6,182,212),amber=(245,158,11),steel=(71,85,105),green=(16,185,129))
@@ -162,11 +163,13 @@ def sc_shot(L,lt,d,sc,dd):
     m=Image.new('L',(vw,vh),0); ImageDraw.Draw(m).rounded_rectangle((0,0,vw,vh),R['lg'],fill=int(255*p)); crop.putalpha(m)
     L.alpha_composite(crop,(vx0,vy0))
 SC=dict(shot=sc_shot,hook=sc_hook,logo=sc_logo,tasks=sc_tasks,fleet=sc_fleet,community=sc_comm,pillars=sc_pillars,end=sc_end)
+MOTION=dict(kinetic=draw_kinetic,ui=draw_ui,infographic=draw_infographic)
 def scene_layer(i,t):
     lt=t-starts[i]; L=Image.new('RGBA',(W,H),(0,0,0,0)); d=ImageDraw.Draw(L)
     zoom=1+0.03*(lt/dur[i])  # subtle push-in
     sc=S[i]
     if sc['scene']=='shot': sc_shot(L,lt,d,sc,dur[i])
+    elif sc['scene'] in MOTION: MOTION[sc['scene']](L,lt,sc,dur[i],F,C)
     else: SC[sc['scene']](L,lt,d)
     if zoom!=1:
         nw,nh=int(W*zoom),int(H*zoom); L=L.resize((nw,nh),Image.BILINEAR).crop(((nw-W)//2,(nh-H)//2,(nw-W)//2+W,(nh-H)//2+H))

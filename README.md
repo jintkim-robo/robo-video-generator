@@ -54,6 +54,29 @@ Fonts: Noto Sans JP（日本語）/ Roboto（英字）— デザインシステ�
 720×1280, H.264 **Main** profile level 3.1, yuv420p, CRF 21, AAC 128k, `+faststart`。
 High プロファイル 1080p はスマホで再生できないことがあったため、この設定にしています。30秒で約5MB。
 
+
+## 無料モーション演出 / Free motion scenes
+
+3種類の追加シーンを **Pillowだけ** で描画します。新たなAPIキーや有料動画サービスは必要ありません。
+Three additional motion styles render with Pillow. No new API keys, paid model or dependency is needed.
+
+- `kinetic`: Kinetic Typography — 文字が順番に出現する見出し（`headline` / `tagline`）
+- `ui`: UI/UX Animation — 最大3ステップの模擬ワークフローとカーソル演出（`steps`）
+- `infographic`: Infographic Animation — 数値カウンターと最大4本の棒グラフ（`metric` / `bars`）
+
+`script.motion.example.json` が追加シーンの入力例です。**数値はすべて架空のデモ値**であり、Robo Co-opの実績ではありません。
+Try without replacing the existing storyboard:
+
+```bash
+python3 -c 'import json; d=json.load(open("config.json")); d["script"]="script.motion.example.json"; d["out"]="out/motion-demo.mp4"; json.dump(d,open("config.motion.json","w"),ensure_ascii=False,indent=2)'
+PYTHON=.venv/bin/python ./run.sh config.motion.json
+```
+
+既存のシーンは変更しません。利用する際は、音声用`lines`を必ず設定してください。
+Existing scenes remain compatible. Supply `lines` for narration timing in every new scene.
+
+**注意 / Notes:** These are *animation techniques*, not subscription-based services. Claude Code is a separate coding assistant and is not required. Seedance is a separate generative video provider and is not integrated: API access, pricing, commercial terms and personal-data handling need independent review.
+
 ## ライセンス / License
 - コード: MIT（`LICENSE`、© Robo Co-op）/ Code: MIT.
 - **対象外 / Not covered**: Robo-Design-System のロゴ・ブランド資産は MIT の対象外で **All rights reserved**（本リポジトリには同梱していません）。Robo Co-op logos and brand assets are NOT covered by the MIT license and are all rights reserved.

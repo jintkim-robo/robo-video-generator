@@ -1,0 +1,85 @@
+[
+  {
+    "scene": "kinetic",
+    "eyebrow": "ROBO CO-OP",
+    "title": "みんなのAI",
+    "headline": "AIを、みんなの力に。",
+    "tagline": "Learn • Build • Share",
+    "lines": [
+      {
+        "sub": "AIを、みんなの力に。"
+      },
+      {
+        "sub": "学びから仕事へ。"
+      },
+      {
+        "sub": "一緒に未来をつくります。"
+      }
+    ]
+  },
+  {
+    "scene": "ui",
+    "eyebrow": "AX WORKFLOW",
+    "title": "業務の流れ",
+    "steps": [
+      {
+        "label": "依頼を受ける",
+        "detail": "Intake"
+      },
+      {
+        "label": "AIが下書き",
+        "detail": "AI Working"
+      },
+      {
+        "label": "人が確認",
+        "detail": "Human Review"
+      }
+    ],
+    "lines": [
+      {
+        "sub": "まず依頼を受け付けます。"
+      },
+      {
+        "sub": "次にAIが作業します。"
+      },
+      {
+        "sub": "最後に人が確認します。"
+      }
+    ]
+  },
+  {
+    "scene": "infographic",
+    "eyebrow": "DEMO DATA",
+    "title": "数値はすべて架空の例",
+    "metric": {
+      "value": 100,
+      "suffix": "件",
+      "label": "サンプル処理数（架空）"
+    },
+    "bars": [
+      {
+        "label": "受信",
+        "value": 100
+      },
+      {
+        "label": "自動分類",
+        "value": 80
+      },
+      {
+        "label": "人の確認",
+        "value": 20
+      }
+    ],
+    "lines": [
+      {
+        "sub": "架空のデータを使って、"
+      },
+      {
+        "sub": "実績を図で見せます。"
+      },
+      {
+        "sub": "数値は実績ではありません。"
+      }
+    ]
+  }
+]
