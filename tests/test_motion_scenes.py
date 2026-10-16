@@ -65,6 +65,9 @@ def test_ui_requires_array_of_steps(scene):
 
 
 def test_japanese_punctuation_is_not_orphaned():
-    lines = MOD._wrap("AIを、みんなの力に。", F(62))
-    assert len(lines) == 2
-    assert not lines[1].startswith("。")
+    sample = "AIを、みんなの力に。"
+    font = F(62)
+    # Intentionally constrain width: at the default width this fits on one line.
+    lines = MOD._wrap(sample, font, max_width=font.getlength(sample) * 0.65)
+    assert len(lines) >= 2
+    assert all(not row.startswith(("、", "。", "！", "？")) for row in lines[1:])
