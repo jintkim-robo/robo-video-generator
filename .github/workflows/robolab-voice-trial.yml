@@ -1,0 +1,79 @@
+name: Robo Lab English voice trial
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/robolab-en-voice-20261027]
+    paths: [.github/workflows/robolab-voice-trial.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  render-voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install only the original TTS dependency and ffmpeg
+        run: |
+          python -m pip install "$(grep '^edge-tts==' requirements.txt)"
+          if ! command -v ffmpeg >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
+      - name: Prepare an English voice trial (no private assets or credentials)
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          folder = Path('build/voice-trial')
+          folder.mkdir(parents=True, exist_ok=True)
+          scenes = [
+            ('opening', 0.25, 3.75, 'Find. Build. Operate. Protect.'),
+            ('finder', 4.15, 15.65, 'Robo Finder turns business context into clear priorities. Explore use cases, compare impact and feasibility, and move from process analysis to return on investment.'),
+            ('builder_intro', 16.15, 19.25, 'With Robo Builder, ideas become working software.'),
+            ('builder_loop', 19.55, 26.90, 'Specialized agents plan, code, test, and review in continuous development loops, with humans in control.'),
+            ('builder_results', 27.20, 29.85, 'Then review the engineering results.'),
+            ('workers', 30.20, 42.65, 'For daily operations, Robo Workers brings agents together in Mission Control. This prototype shows parallel tasks, shared visibility, and human approval before sensitive actions.'),
+            ('protector', 43.15, 54.65, 'Robo Protector adds a quality and security checkpoint. Review web scans, prioritize findings, and assess AI tools before adoption. Formal approval stays with your team.'),
+            ('closing', 55.25, 59.75, 'Robo Lab. AI-native work. Humans stay in control.')
+          ]
+          script = [{'scene': name, 'lines': [{'sub': text, 'tts': text}]} for name, start, end, text in scenes]
+          config = {'voice': 'en-US-AndrewMultilingualNeural', 'rate': '+0%'}
+          (folder/'script.json').write_text(json.dumps(script, indent=2), encoding='utf-8')
+          (folder/'config.json').write_text(json.dumps(config, indent=2), encoding='utf-8')
+          (folder/'timing.json').write_text(json.dumps([{'scene': name, 'start': start, 'end': end} for name, start, end, text in scenes], indent=2), encoding='utf-8')
+          provenance = {'repository': 'jintkim-robo/robo-video-generator', 'commit': os.environ['GITHUB_SHA'], 'source': 'tts.py (unmodified)', 'tts_sha256': hashlib.sha256(Path('tts.py').read_bytes()).hexdigest(), 'voice': config['voice'], 'provider': 'edge-tts', 'private_assets_uploaded': False, 'credentials_used': False}
+          (folder/'provenance.json').write_text(json.dumps(provenance, indent=2), encoding='utf-8')
+          PY
+      - name: Run the repository's unmodified TTS implementation
+        working-directory: build/voice-trial
+        env:
+          RVG_CONFIG: config.json
+        run: timeout 240s python ../../tts.py
+      - name: Verify the generated audio
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          folder = Path('build/voice-trial')
+          durations = json.loads((folder/'durs.json').read_text())
+          assert len(durations) == 8
+          for i in range(8):
+            p = folder/f'a{i}_0.wav'
+            assert p.stat().st_size > 1000, p
+            meta = json.loads(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','json',str(p)]))
+            assert float(meta['format']['duration']) > 0.5, p
+          print('PASS: eight narration segments generated with original tts.py')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: robolab-english-voice-trial
+          path: build/voice-trial/
+          retention-days: 3
+          if-no-files-found: error
