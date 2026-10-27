@@ -1,0 +1,143 @@
+name: Robo Lab real application capture
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/robolab-en-voice-20261027]
+    paths: [.github/workflows/robolab-live-capture.yml]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser recorder
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Operate the public Finder app
+        run: |
+          mkdir -p build/live-capture
+          cat > /tmp/capture.py <<'PY'
+          import asyncio, json, re, time
+          from pathlib import Path
+          from playwright.async_api import async_playwright
+          OUT = Path('build/live-capture')
+          async def main():
+            events = []
+            async with async_playwright() as p:
+              browser = await p.chromium.launch()
+              context = await browser.new_context(viewport={'width':1600,'height':900},locale='en-US',record_video_dir=str(OUT),record_video_size={'width':1600,'height':900})
+              page = await context.new_page()
+              start = time.monotonic()
+              def mark(name, **extra):
+                events.append({'event':name,'seconds':round(time.monotonic()-start,3),**extra})
+                print(name, flush=True)
+              async def snap(name):
+                await page.screenshot(path=str(OUT/f'{name}.png'),full_page=True)
+                (OUT/f'{name}.txt').write_text(await page.locator('body').inner_text(),encoding='utf-8')
+              async def move_click(loc):
+                await loc.scroll_into_view_if_needed()
+                b = await loc.bounding_box()
+                if b:
+                  await page.mouse.move(b['x']+b['width']/2,b['y']+b['height']/2,steps=16)
+                await page.wait_for_timeout(280)
+                await loc.click()
+                await page.wait_for_timeout(500)
+              try:
+                await page.goto('https://robofinder.robo-lab.io/',wait_until='networkidle',timeout=60000)
+                mark('landing_loaded',url=page.url)
+                await snap('01_landing')
+                await page.wait_for_timeout(1200)
+                await page.mouse.wheel(0,460)
+                await page.wait_for_timeout(800)
+                links = page.locator('a[href="/app"]')
+                if await links.count():
+                  await move_click(links.first)
+                else:
+                  await page.goto('https://robofinder.robo-lab.io/app',wait_until='networkidle',timeout=60000)
+                await page.wait_for_timeout(1300)
+                await snap('02_form')
+                mark('form_loaded',url=page.url)
+                form = page.locator('form').first
+                await form.wait_for(timeout=10000)
+                combos = form.get_by_role('combobox')
+                for idx,pattern in [(0,'Manufactur'),(1,'Sales'),(2,'Korea')]:
+                  await move_click(combos.nth(idx))
+                  opts = page.get_by_role('option')
+                  labels = await opts.all_inner_texts()
+                  mark(f'options_{idx}',options=labels)
+                  matched = opts.filter(has_text=re.compile(pattern,re.I))
+                  if await matched.count() == 0:
+                    raise RuntimeError(f'Required option not present: {pattern}')
+                  await move_click(matched.first)
+                values = {'businessType':'Sustainable consumer goods','companyName':'GreenStep Korea (DEMO)','totalEmployees':'50','departmentSize':'8','freeText':'Fictional demonstration company. Our sales team tracks leads in spreadsheets, answers repeated customer inquiries by email, and manually prepares weekly sales reports. We want to improve response time and reduce repetitive work.'}
+                for name,value in values.items():
+                  loc = form.locator(f'[name="{name}"]')
+                  if await loc.count():
+                    await loc.scroll_into_view_if_needed()
+                    await move_click(loc)
+                    await loc.fill(value)
+                    await page.wait_for_timeout(450)
+                await snap('03_filled')
+                mark('form_filled')
+                submit = form.locator('button[type="submit"]')
+                await move_click(submit)
+                mark('generation_started')
+                try:
+                  await page.wait_for_url('**/usecases',timeout=110000)
+                except Exception:
+                  mark('generation_did_not_navigate')
+                await page.wait_for_timeout(1700)
+                await snap('04_generation_result')
+                mark('result_ready',url=page.url)
+                if '/usecases' in page.url:
+                  await page.wait_for_timeout(1800)
+                  for i in range(5):
+                    await page.mouse.move(1350,540,steps=10)
+                    await page.mouse.wheel(0,490)
+                    await page.wait_for_timeout(1300)
+                    mark(f'result_scroll_{i}')
+                  await snap('05_results_bottom')
+                  await page.mouse.wheel(0,-3500)
+                  await page.wait_for_timeout(1400)
+                  mark('results_top_again')
+                  buttons=await page.get_by_role('button').all_inner_texts()
+                  mark('result_buttons',buttons=buttons)
+                  await page.wait_for_timeout(1500)
+                mark('capture_complete')
+              except Exception as e:
+                mark('capture_error',error=str(e)[:1800])
+                try: await snap('error')
+                except Exception: pass
+              finally:
+                video=page.video
+                await context.close()
+                if video: await video.save_as(str(OUT/'finder_real_browser.webm'))
+                (OUT/'events.json').write_text(json.dumps(events,indent=2),encoding='utf-8')
+              refctx=await browser.new_context(viewport={'width':1600,'height':1000})
+              refpage=await refctx.new_page()
+              for name,url in [('clawport','https://www.clawport.dev/'),('commandcenter','https://techexplore.us/commandcenter/'),('aita','https://aitamedia.com/products/command-center')]:
+                try:
+                  await refpage.goto(url,wait_until='domcontentloaded',timeout=25000)
+                  await refpage.wait_for_timeout(2500)
+                  await refpage.screenshot(path=str(OUT/f'reference_{name}.png'),full_page=True)
+                  imgs=await refpage.locator('img').evaluate_all('(xs)=>xs.map(x=>({src:x.src,alt:x.alt}))')
+                  (OUT/f'reference_{name}.json').write_text(json.dumps(imgs,indent=2),encoding='utf-8')
+                except Exception as e: print('Reference unavailable',name,str(e)[:120])
+              await browser.close()
+          asyncio.run(main())
+          PY
+          python /tmp/capture.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: robolab-real-finder-capture
+          path: build/live-capture/
+          retention-days: 1
