@@ -1,0 +1,126 @@
+name: Robo Lab Finder matrix and analysis capture
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/robolab-en-voice-20261027]
+    paths: [.github/workflows/robolab-finder-deep-capture.yml]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install recorder
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Capture only real browser interactions, no mocked responses
+        run: |
+          mkdir -p build/finder-deep
+          cat > /tmp/deep.py <<'PY'
+          import asyncio, json, re, time
+          from pathlib import Path
+          from playwright.async_api import async_playwright
+          O=Path('build/finder-deep')
+          async def main():
+            events=[]
+            async with async_playwright() as p:
+              b=await p.chromium.launch()
+              c=await b.new_context(viewport={'width':1600,'height':1000},locale='en-US',record_video_dir=str(O),record_video_size={'width':1600,'height':1000})
+              page=await c.new_page(); start=time.monotonic()
+              def mark(event,**kw):
+                events.append({'event':event,'seconds':round(time.monotonic()-start,3),**kw});print(event,flush=True)
+              async def snap(n):
+                await page.screenshot(path=str(O/f'{n}.png'),full_page=True)
+                (O/f'{n}.txt').write_text(await page.locator('body').inner_text(),encoding='utf-8')
+              async def click(l):
+                await l.scroll_into_view_if_needed();bb=await l.bounding_box()
+                if bb: await page.mouse.move(bb['x']+bb['width']/2,bb['y']+bb['height']/2,steps=20)
+                await page.wait_for_timeout(250);await l.click();await page.wait_for_timeout(650)
+              try:
+                await page.goto('https://robofinder.robo-lab.io/app',wait_until='networkidle',timeout=60000)
+                await page.wait_for_timeout(1100);mark('form_ready');await snap('01_form')
+                f=page.locator('form').first;await f.wait_for(timeout=10000)
+                for i,pat in [(0,'Manufactur'),(1,'Sales'),(2,'Korea')]:
+                  await click(f.get_by_role('combobox').nth(i))
+                  await click(page.get_by_role('option').filter(has_text=re.compile(pat,re.I)).first)
+                vals={'businessType':'Sustainable consumer goods','companyName':'GreenStep Korea (DEMO)','totalEmployees':'50','departmentSize':'8','freeText':'Fictional demonstration company. Sales staff manually log inbound inquiries and sales leads in Excel, send repeated replies using Outlook, and compile weekly reports. We want faster customer responses, fewer manual errors, and improved conversion rates.'}
+                for n,v in vals.items():
+                  l=f.locator(f'[name="{n}"]')
+                  if await l.count():
+                    await click(l);await l.fill(v);await page.wait_for_timeout(250)
+                await snap('02_filled');mark('form_filled')
+                await click(f.locator('button[type="submit"]'));mark('generation_started')
+                await page.wait_for_url('**/usecases',timeout=120000)
+                await page.wait_for_timeout(1700);mark('table_ready');await snap('03_table')
+                await page.wait_for_timeout(1600)
+                await click(page.get_by_role('tab',name='Matrix',exact=True))
+                mark('matrix_ready');await snap('04_matrix')
+                await page.wait_for_timeout(2400)
+                numbered=page.get_by_role('button').filter(has_text=re.compile(r'^\d{1,2}$'))
+                if await numbered.count():
+                  l=numbered.first;await l.hover();mark('matrix_hover');await page.wait_for_timeout(2400);await snap('05_matrix_tooltip')
+                  await click(l);mark('usecase_selected');await page.wait_for_timeout(1000)
+                await click(page.get_by_role('button',name=re.compile('Continue',re.I)).last)
+                await page.wait_for_timeout(1300);mark('analysis_entry',url=page.url);await snap('06_analysis_entry')
+                if '/auth' in page.url:
+                  mark('blocked_login_required')
+                else:
+                  f=page.locator('form').first
+                  if await f.count():
+                    names=await f.locator('input,textarea').evaluate_all('(xs)=>xs.map(x=>({name:x.name,placeholder:x.placeholder,type:x.type}))')
+                    mark('analysis_form_fields',fields=names)
+                    vals={'annualVolume':'1200','nPeople':'8','timePerCaseHours':'0.5','hourlyCost':'25','currentTools':'Microsoft Outlook, Excel, Teams. No existing CRM integration.','extraNotes':'Fictional demonstration inputs, not measured customer results. Each inbound inquiry takes 30 minutes to read, log in Excel, check availability, draft a reply and update the weekly report. The eight-person team handles 1,200 inquiries per year in total. Keep human approval for pricing and all outbound customer emails. Target faster responses, fewer entry errors and better lead conversion. Use USD for costs.'}
+                    for suffix,v in vals.items():
+                      l=f.locator(f'[name$="{suffix}"]')
+                      if await l.count():
+                        await click(l.first);await l.first.fill(v);await page.wait_for_timeout(220)
+                    mark('analysis_inputs_filled');await snap('07_analysis_inputs')
+                    await page.wait_for_timeout(1600)
+                    submit=f.locator('button[type="submit"]')
+                    if await submit.count():
+                      await click(submit);mark('analysis_requested')
+                      for _ in range(90):
+                        if '/result/' in page.url:break
+                        dialog=page.get_by_role('dialog')
+                        if await dialog.count() and await dialog.first.is_visible():
+                          mark('analysis_gate',text=(await dialog.first.inner_text())[:1800]);break
+                        await page.wait_for_timeout(2000)
+                      await page.wait_for_timeout(1700);await snap('08_analysis_response');mark('analysis_response',url=page.url)
+                  if '/result/' in page.url:
+                    mark('result_start');await page.wait_for_timeout(2300)
+                    tabs=await page.get_by_role('tab').all_inner_texts();mark('result_tabs',tabs=tabs)
+                    for i in range(8):
+                      await page.mouse.move(1400,650,steps=10);await page.mouse.wheel(0,530);await page.wait_for_timeout(1400)
+                      mark(f'result_scroll_{i}');await page.screenshot(path=str(O/f'result_view_{i}.png'))
+                    for pat in ['To.Be','ROI','Workflow','Flow']:
+                      l=page.get_by_role('tab',name=re.compile(pat,re.I))
+                      if await l.count():
+                        await click(l.first);mark('result_tab',name=pat);await page.wait_for_timeout(2200);await snap('tab_'+re.sub('[^a-zA-Z]','',pat))
+                    await snap('09_result_full');mark('result_finished')
+                await page.wait_for_timeout(1300)
+              except Exception as e:
+                mark('error',error=str(e)[:1500])
+                try:await snap('error')
+                except Exception:pass
+              finally:
+                video=page.video;await c.close()
+                if video:await video.save_as(str(O/'finder_deep_real.webm'))
+                (O/'events.json').write_text(json.dumps(events,indent=2),encoding='utf-8')
+                await b.close()
+          asyncio.run(main())
+          PY
+          python /tmp/deep.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: robolab-finder-deep-real-capture
+          path: build/finder-deep/
+          retention-days: 1
